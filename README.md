@@ -46,6 +46,20 @@ To stop receiving:
 1> icmp_data_receive_server:stop_receive().
 ```
 
+#Observing Network Traffic
+ICMP packets may be observed with tcpdump (or others). This may be done for packets sent by way of a standard ping, or with this project.
+
+```
+$ # If lo0 is the local loopback interface reported by netstat
+$ sudo tcpdump -X -i lo0 'icmp[icmptype] == icmp-echo'
+```
+
+And in another window, send 1 ping (echo request) to 127.0.0.1:
+
+```
+$ ping -c1 127.0.0.1
+```
+
 #Possible Improvements
 * Add verification that the 8 packets that arrive for a given byte when using `payload_len` arrive in order. This can be known from the sequence number field, as the sequence number for bit 0 of a byte is always evenly divisible by 8, with subsequent bits increasing from there.
 
