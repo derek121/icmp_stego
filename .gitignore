@@ -5,3 +5,4 @@ deps/
 .idea
 icmp_data.iml
 logs/
+.eunit/
