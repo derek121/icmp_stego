@@ -83,22 +83,16 @@ handle_call(get_data, _From, State) ->
   Data = State#state.data,
   {reply, {data, Data}, State};
 
-handle_call(Request, _From, State) ->
+handle_call(_Request, _From, State) ->
   {reply, ok, State}.
 
 %%%
 %%% TODO: don't start if already running
-handle_cast(T = {start_receive, Scheme}, State) ->
+handle_cast({start_receive, Scheme}, State) ->
   Pid = spawn(?MODULE, do_start_receive, [Scheme]),
-
-  %gen_icmp:controlling_process(Socket, Pid),
-  %Pid ! ready,
-
   {noreply, State#state{child = Pid}};
 
 handle_cast(stop_receive, State) ->
-  %Socket = State#state.socket,
-  %gen_icmp:close(Socket),
   Child = State#state.child,
   Child ! stop,
   {noreply, State#state{child = undefined}};
@@ -111,7 +105,7 @@ handle_cast({data_received, DataIn}, State) ->
 handle_cast(clear_data, State) ->
   {noreply, State#state{data = ""}};
 
-handle_cast(Request, State) ->
+handle_cast(_Request, State) ->
   {noreply, State}.
 
 %%%
