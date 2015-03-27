@@ -12,8 +12,6 @@ chmod:
 	sudo chmod 4750 deps/procket/priv/procket
 
 run:
-	#sudo chown root deps/procket/priv/procket
-	#sudo chmod 4750 deps/procket/priv/procket
 	erl -pa ebin -pa deps/*/ebin -config config/sys -s icmp_data
 
 test:
