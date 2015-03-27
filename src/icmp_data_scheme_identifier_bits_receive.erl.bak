@@ -1,0 +1,123 @@
+-module(icmp_data_scheme_identifier_bits_receive).
+
+-export([init_receive/0]).
+-export([process_packet/2]).
+
+%%% Exported for testing:
+-export([extract_bit/1]).
+-export([handle_data/2]).
+
+-define(DEFAULT_PAYLOAD, "abc").
+-define(ID_INC_PER_BYTE, 20).
+
+-include_lib("pkt/include/pkt.hrl").
+
+-record(mod_state_identifier_bits_receive, {
+  current = 0,
+  bit_num = 0
+}).
+
+-record(bit, {
+  val,
+  is_first
+}).
+
+init_receive() ->
+  #mod_state_identifier_bits_receive{}.
+
+process_packet(State, Ip) ->
+  [_Ipv4Hdr, IcmpHdr, _Payload] = pkt:decapsulate(ipv4, Ip),
+  Id = IcmpHdr#icmp.id,
+  Bit = extract_bit(Id),
+  handle_data(State, Bit).
+
+extract_bit(Id) ->
+  Rem = (Id rem ?ID_INC_PER_BYTE),
+
+  IsFirst = (Rem =:= 0) or (Rem =:= 1),
+  Val = Id rem 2,
+  #bit{val = Val, is_first = IsFirst}.
+
+%%% Expecting first bit. Received first bit.
+%%% Set bit and advance bit_num.
+handle_data(
+    #mod_state_identifier_bits_receive{
+      bit_num = BitNum},
+    #bit{
+      is_first = true} = Bit) when BitNum =:= 0 ->
+  BitVal = Bit#bit.val,
+  create_return(1, BitVal);
+  %{
+  %  incomplete,
+  %  #mod_state_identifier_bits_receive{
+  %    current = BitVal,
+  %    bit_num = 1}
+  %};
+
+%%% Expecting first bit. Received non-first bit.
+%%% Ignore bit (thus waiting for the next first bit).
+handle_data(
+    #mod_state_identifier_bits_receive{
+      bit_num = BitNum} = State,
+    #bit{
+      is_first = false}) when BitNum =:= 0 ->
+  create_return(State);
+%  {
+%    incomplete,
+%    State
+%  };
+
+%% Expecting non-first bit, received non-first bit
+handle_data(
+    #mod_state_identifier_bits_receive{
+      bit_num = BitNum} = State,
+    #bit{
+      is_first = false} = Bit) when BitNum =/= 0 ->
+  Current = use_bit(Bit#bit.val, State),
+  create_return(BitNum + 1, Current);
+  %create_return(BitNum, Current);
+
+%% Expecting non-first bit, received first bit
+%% Clear state and rehandle.
+handle_data(
+    #mod_state_identifier_bits_receive{
+      bit_num = BitNum},
+    #bit{
+      is_first = true} = Bit) when BitNum =/= 0 ->
+  handle_data(#mod_state_identifier_bits_receive{}, Bit).
+
+%%% If the new high-order bit is 0, no change is needed for Current
+use_bit(
+    BitVal,
+    #mod_state_identifier_bits_receive{
+      current = Current}) when BitVal =:= 0 ->
+  Current;
+
+%%% If the new high-order bit is 1, apply it to Current
+use_bit(
+    BitVal,
+    #mod_state_identifier_bits_receive{
+      current = Current,
+      bit_num = BitNum}) when BitVal =:= 1 ->
+  Current bor (1 bsl BitNum).
+
+create_return(State) ->
+  {incomplete, State}.
+
+create_return(BitNum, Current) when BitNum < 8 ->
+  {
+    incomplete,
+    #mod_state_identifier_bits_receive{
+      bit_num = BitNum,
+      current = Current
+    }
+  };
+create_return(BitNum, Current) when BitNum =:= 8 ->
+  {
+    complete,
+    #mod_state_identifier_bits_receive{},
+    [Current]
+  }.
+
+
+

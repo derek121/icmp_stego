@@ -1,0 +1,5 @@
+*.swp
+ebin/
+.rebar/
+deps/
+
