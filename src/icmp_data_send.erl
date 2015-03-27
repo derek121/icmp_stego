@@ -1,14 +1,8 @@
 -module(icmp_data_send).
 
-%%% TODO: testing
--compile(export_all).
-
-
 -export([send/1]).
 -export([send/2]).
 -export([send/3]).
-
--export([test/0]).
 
 %%% TODO: via config option
 -define(DELAY_MS, 1000).
@@ -72,9 +66,5 @@ validate_response(PayloadOut, PacketIn) ->
 
 delay(Ms) ->
   timer:sleep(Ms).
-
-test() ->
-  %#foo{a=23}.
-  ok.
 
 
