@@ -1,20 +1,9 @@
 -module(icmp_data_receive).
 
-%%% TODO: testing
--compile(export_all).
-
-
-%-export([recv/1]).
 -export([recv/3]).
 
 %%% Include for logging purposes
 -include_lib("pkt/include/pkt.hrl").
-
-%recv(Scheme) ->
-%  {ok, Socket} = gen_icmp:open(),
-%  recv(Scheme, Socket),
-%  ok = gen_icmp:close(Socket),
-%  ok.
 
 recv(Mod, Socket, Timeout) ->
   case gen_icmp:recv(Socket, 500, Timeout) of
@@ -35,12 +24,13 @@ recv(Mod, Socket, Timeout) ->
   end.
 
 %%% TODO: validate that it's a packet sent by us
-log_recv_packet(Msg, Addr, Ip) ->
-  lager:info("Recv. ~p. From ~p", [Msg, Addr]),
 
-  [Ipv4Hdr, IcmpHdr, Payload] = pkt:decapsulate(ipv4, Ip),
-  lager:info("Ipv4Hdr: ~p", [lager:pr(Ipv4Hdr, ?MODULE)]),
-  lager:info("IcmpHdr: ~p", [lager:pr(IcmpHdr, ?MODULE)]),
-  lager:info("Payload: ~p", [Payload]),
-  ok.
+%log_recv_packet(Msg, Addr, Ip) ->
+%  lager:info("Recv. ~p. From ~p", [Msg, Addr]),
+%
+%  [Ipv4Hdr, IcmpHdr, Payload] = pkt:decapsulate(ipv4, Ip),
+%  lager:info("Ipv4Hdr: ~p", [lager:pr(Ipv4Hdr, ?MODULE)]),
+%  lager:info("IcmpHdr: ~p", [lager:pr(IcmpHdr, ?MODULE)]),
+%  lager:info("Payload: ~p", [Payload]),
+%  ok.
 
